@@ -135,6 +135,15 @@ def total_unigram_extractor():
     global unigram_file_directory
     total_filename = "total_unigram" + ".txt"
 
+    try:
+        # Create directory for unigram files if it doesn't exist
+        if not os.path.exists(unigram_file_directory):
+            os.makedirs(unigram_file_directory)
+    except OSError:
+        print('Error: Creating directory. ' + unigram_file_directory)
+    except Exception as err:
+            print(f"Error: {err}")
+    
     total_unigram = {}
     for file in os.listdir(unigram_file_directory):
         with open(os.path.join(unigram_file_directory, file), 'r') as f:
