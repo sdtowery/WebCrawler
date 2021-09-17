@@ -1,6 +1,9 @@
 import re
 from urllib.error import URLError
 import validators
+import os
+import json
+from typing import Counter
 from bs4 import BeautifulSoup
 from urllib.request import HTTPError
 from urllib.request import urlopen
@@ -16,7 +19,8 @@ def dls(url, depth):
             # When depth > 0, grab content and links
             # If data = None, skip to next child
             data = webcrawl(url)
-            if data == None: return
+            if data == None:
+                return
             content, links = data
             for link in links:
                 if not link in visited:
@@ -26,7 +30,8 @@ def dls(url, depth):
             # When depth = 0, grab content
             # If data = None, skip to next child
             data = webcrawl(url)
-            if data == None: return
+            if data == None:
+                return
             content = data[0]
         write_file(content, url)
 
@@ -41,6 +46,7 @@ def ids(url, max_depth):
         dls(url, i)
         print("-------------------------")
 
+
 def webcrawl(url):
     # Documentation for BeautifulSoup found here:
     # https://www.crummy.com/software/BeautifulSoup/bs4/doc/
@@ -51,7 +57,8 @@ def webcrawl(url):
         html = urlopen(url).read()
         soup = BeautifulSoup(html, features="html.parser")
     except HTTPError as err:
-        print(f"HTTP Error {err.code}: {err.reason} - \'{url}\' ... skipping ...")
+        print(
+            f"HTTP Error {err.code}: {err.reason} - \'{url}\' ... skipping ...")
         return None
     except URLError as err:
         print(f"URL Error: {err.reason} - \'{url}\' ... skipping ...")
@@ -68,7 +75,8 @@ def webcrawl(url):
     url_list = []
     for link in soup.findAll('a', attrs={'href': re.compile("^https?://")}):
         url = link.get('href')
-        if url == None: continue
+        if url == None:
+            continue
         # Strip '/' from the end of the url to avoid duplicates
         url_list.append(url.rstrip('/'))
 
@@ -76,11 +84,34 @@ def webcrawl(url):
 
 
 def write_file(content, url):
-    pass
+    # https://stackoverflow.com/questions/27647155/most-efficient-way-to-strip-forbidden-characters-in-file-name-from-unicode-strin
+    url = re.sub(r'[\\/*?:"<>|.]', "", url)
+    file_name = url + ".txt"
+    f = open(file_name, "x")
+    try:
+        f.write(content)
+        f.close()
+        # file_list.append(file_name)
+    except:
+        f.close()
+        os.remove(file_name)
+        pass
 
 
-def unigram_extractor(links):
-    print(*links, sep="\n")
+def unigram_extractor(files):
+    # https://stackoverflow.com/questions/328356/extracting-text-from-html-file-using-python
+    unigram_text = []
+    for file in files:
+        f = open(file.name, 'r')
+        contents = f.read()
+        lines = (line.strip() for line in contents.splitlines())
+        chunks = (phrase.strip()
+                  for line in lines for phrase in line.split(" "))
+        text = '\n'.join(chunk for chunk in chunks if chunk)
+        row = list(text)
+        unigram = json.dumps(Counter(row))
+        unigram_text.append(unigram)
+    return unigram_text
 
 
 # Main
