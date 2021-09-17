@@ -1,4 +1,5 @@
 import re
+from urllib import error
 from urllib.error import URLError
 import validators
 import os
@@ -57,8 +58,7 @@ def webcrawl(url):
         html = urlopen(url).read()
         soup = BeautifulSoup(html, features="html.parser")
     except HTTPError as err:
-        print(
-            f"HTTP Error {err.code}: {err.reason} - \'{url}\' ... skipping ...")
+        print(f"HTTP Error {err.code}: {err.reason} - \'{url}\' ... skipping ...")
         return None
     except URLError as err:
         print(f"URL Error: {err.reason} - \'{url}\' ... skipping ...")
@@ -70,10 +70,9 @@ def webcrawl(url):
         script.extract()
 
     content = soup.prettify()
-    write_file(content, url)
 
     url_list = []
-    for link in soup.findAll('a', attrs={'href': re.compile("^https?://")}):
+    for link in soup.findAll('a', attrs={'href': re.compile("^http://")}):
         url = link.get('href')
         if url == None:
             continue
@@ -82,20 +81,25 @@ def webcrawl(url):
 
     return content, url_list
 
-
 def write_file(content, url):
+    global html_file_directory
     # https://stackoverflow.com/questions/27647155/most-efficient-way-to-strip-forbidden-characters-in-file-name-from-unicode-strin
     url = re.sub(r'[\\/*?:"<>|.]', "", url)
     file_name = url + ".txt"
-    f = open(file_name, "x")
+    
     try:
+        # Create directory for html files if it doesn't exist
+        if not os.path.exists(html_file_directory):
+            os.makedirs(html_file_directory)
+        f = open(html_file_directory + file_name, "x")
         f.write(content)
         f.close()
-        # file_list.append(file_name)
-    except:
-        f.close()
-        os.remove(file_name)
-        pass
+    except FileExistsError as err:
+        print(f"File exists: {file_name}")
+    except OSError:
+        print('Error: Creating directory. '+ html_file_directory)
+    except Exception as err:
+        print(f"Error: {err}")
 
 
 def unigram_extractor(files):
@@ -116,6 +120,7 @@ def unigram_extractor(files):
 
 # Main
 # User inputs URL and depth
+html_file_directory = "./html_files/"
 while True:
     user_url = input("Enter a valid URL: ")
     if not validators.url(user_url):
@@ -127,4 +132,4 @@ depth = int((input("Enter a maximum depth: ")))
 
 visited = []
 ids(user_url, depth)
-# unigram_extractor(url_list)
+# unigram_extractor(files)
