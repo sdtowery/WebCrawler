@@ -1,5 +1,4 @@
 import re
-from urllib import error
 from urllib.error import URLError
 import validators
 import os
@@ -8,7 +7,6 @@ from typing import Counter
 from bs4 import BeautifulSoup
 from urllib.request import HTTPError
 from urllib.request import urlopen
-from validators.url import url
 
 
 def dls(url, depth):
@@ -109,7 +107,7 @@ def write_file(content, url):
 def unigram_extractor(files):
     # https://stackoverflow.com/questions/328356/extracting-text-from-html-file-using-python
     global unigram_file_directory
-    unigram_text = []
+    
     for file_name in files:
         f = open(html_file_directory + file_name, 'r')
         contents = f.read()
@@ -133,7 +131,25 @@ def unigram_extractor(files):
         except Exception as err:
             print(f"Error: {err}")
 
+def total_unigram_extractor():
+    global unigram_file_directory
+    total_filename = "total_unigram" + ".txt"
 
+    total_unigram = {}
+    for file in os.listdir(unigram_file_directory):
+        with open(os.path.join(unigram_file_directory, file), 'r') as f:
+            unigram = json.loads(f.read())
+            for item in unigram:
+                if not item in total_unigram:
+                    total_unigram[item] = unigram[item]
+                else:
+                    total_unigram[item] += unigram[item]
+    try:
+        f = open(unigram_file_directory + total_filename, "x")
+        f.write(json.dumps(total_unigram))
+        f.close()
+    except Exception as err:
+        print(f"Error: {err}")
 # Main
 # User inputs URL and depth
 html_file_directory = "./html_files/"
@@ -151,3 +167,4 @@ file_list = []
 visited = []
 ids(user_url, depth)
 unigram_extractor(file_list)
+total_unigram_extractor()
