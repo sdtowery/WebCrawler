@@ -58,7 +58,8 @@ def webcrawl(url):
         html = urlopen(url).read()
         soup = BeautifulSoup(html, features="html.parser")
     except HTTPError as err:
-        print(f"HTTP Error {err.code}: {err.reason} - \'{url}\' ... skipping ...")
+        print(
+            f"HTTP Error {err.code}: {err.reason} - \'{url}\' ... skipping ...")
         return None
     except URLError as err:
         print(f"URL Error: {err.reason} - \'{url}\' ... skipping ...")
@@ -81,12 +82,14 @@ def webcrawl(url):
 
     return content, url_list
 
+
 def write_file(content, url):
     global html_file_directory
+    global file_list
     # https://stackoverflow.com/questions/27647155/most-efficient-way-to-strip-forbidden-characters-in-file-name-from-unicode-strin
     url = re.sub(r'[\\/*?:"<>|.]', "", url)
     file_name = url + ".txt"
-    
+
     try:
         # Create directory for html files if it doesn't exist
         if not os.path.exists(html_file_directory):
@@ -94,19 +97,21 @@ def write_file(content, url):
         f = open(html_file_directory + file_name, "x")
         f.write(content)
         f.close()
+        file_list.append(file_name)
     except FileExistsError as err:
         print(f"File exists: {file_name}")
     except OSError:
-        print('Error: Creating directory. '+ html_file_directory)
+        print('Error: Creating directory. ' + html_file_directory)
     except Exception as err:
         print(f"Error: {err}")
 
 
 def unigram_extractor(files):
     # https://stackoverflow.com/questions/328356/extracting-text-from-html-file-using-python
+    global unigram_file_directory
     unigram_text = []
-    for file in files:
-        f = open(file.name, 'r')
+    for file_name in files:
+        f = open(html_file_directory + file_name, 'r')
         contents = f.read()
         lines = (line.strip() for line in contents.splitlines())
         chunks = (phrase.strip()
@@ -114,13 +119,25 @@ def unigram_extractor(files):
         text = '\n'.join(chunk for chunk in chunks if chunk)
         row = list(text)
         unigram = json.dumps(Counter(row))
-        unigram_text.append(unigram)
-    return unigram_text
+        try:
+            # Create directory for unigram files if it doesn't exist
+            if not os.path.exists(unigram_file_directory):
+                os.makedirs(unigram_file_directory)
+            unigram_file = open(unigram_file_directory + file_name, 'x')
+            unigram_file.write(unigram)
+            unigram_file.close()
+        except FileExistsError as err:
+            print(f"File exists: {file_name}")
+        except OSError:
+            print('Error: Creating directory. ' + unigram_file_directory)
+        except Exception as err:
+            print(f"Error: {err}")
 
 
 # Main
 # User inputs URL and depth
 html_file_directory = "./html_files/"
+unigram_file_directory = "./unigram_files/"
 while True:
     user_url = input("Enter a valid URL: ")
     if not validators.url(user_url):
@@ -130,6 +147,7 @@ while True:
 
 depth = int((input("Enter a maximum depth: ")))
 
+file_list = []
 visited = []
 ids(user_url, depth)
-# unigram_extractor(files)
+unigram_extractor(file_list)
