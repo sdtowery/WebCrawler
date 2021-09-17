@@ -107,7 +107,7 @@ def write_file(content, url):
 def unigram_extractor(files):
     # https://stackoverflow.com/questions/328356/extracting-text-from-html-file-using-python
     global unigram_file_directory
-    
+
     for file_name in files:
         f = open(html_file_directory + file_name, 'r')
         contents = f.read()
@@ -131,6 +131,7 @@ def unigram_extractor(files):
         except Exception as err:
             print(f"Error: {err}")
 
+
 def total_unigram_extractor():
     global unigram_file_directory
     total_filename = "total_unigram" + ".txt"
@@ -150,6 +151,8 @@ def total_unigram_extractor():
         f.close()
     except Exception as err:
         print(f"Error: {err}")
+
+
 # Main
 # User inputs URL and depth
 html_file_directory = "./html_files/"
