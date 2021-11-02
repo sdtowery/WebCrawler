@@ -22,42 +22,36 @@ class anIndividual:
         self.fitness    = 0
         self.chromosome_length = specified_chromosome_length
         
-    def randomly_generate(self,lb, ub):
+    def randomly_generate(self):
         for i in range(self.chromosome_length):
-            self.chromosome.append(random.uniform(lb, ub))
+            self.chromosome.append(random.randint(0, 1))
         self.fitness = 0
     
     def calculate_fitness(self):
-        x2y2 = self.chromosome[0]**2 + self.chromosome[1]**2
+        # x2y2 = self.chromosome[0]**2 + self.chromosome[1]**2
+        x2y2 = 0
+        for i in range(self.chromosome_length):
+            x2y2 += self.chromosome[i]**2
         self.fitness = 0.5 + (math.sin(math.sqrt(x2y2))**2 - 0.5) / (1+0.001*x2y2)**2
 
     def print_individual(self, i):
         print("Chromosome "+str(i) +": " + str(self.chromosome) + " Fitness: " + str(self.fitness))
       
 class aSimpleSteadyStateGA:
-    def __init__(self, population_size, chromosome_length, mutation_rate, lb, ub):
+    def __init__(self, population_size, chromosome_length, mutation_rate):
         if (population_size < 2):
             print("Error: Population Size must be greater than 2")
             sys.exit()
         self.population_size = population_size
         self.chromosome_length = chromosome_length
         self.mutation_amt = mutation_rate
-        self.lb = lb
-        self.ub = ub
-        self.mutation_amt = mutation_rate * (ub - lb)
         self.population = []
-        self.hacker_tracker_x = []
-        self.hacker_tracker_y = []
-        self.hacker_tracker_z = []
         
     def generate_initial_population(self):
         for i in range(self.population_size):
             individual = anIndividual(self.chromosome_length)
-            individual.randomly_generate(self.lb,self.ub)
+            individual.randomly_generate()
             individual.calculate_fitness()
-            self.hacker_tracker_x.append(individual.chromosome[0])
-            self.hacker_tracker_y.append(individual.chromosome[1])
-            self.hacker_tracker_z.append(individual.fitness)
             self.population.append(individual)
     
     def get_worst_fit_individual(self):
@@ -69,6 +63,11 @@ class aSimpleSteadyStateGA:
                 worst_individual = i
         return worst_individual
     
+    def get_n_worst_fit_individuals(self):
+        worst_fitness = 999999999.0  # For Maximization
+        worst_individuals = []
+        pass
+    
     def get_best_fitness(self):
         best_fitness = -99999999999.0
         best_individual = -1
@@ -78,21 +77,28 @@ class aSimpleSteadyStateGA:
                 best_individual = i
         return best_fitness
         
-    def evolutionary_cycle(self):
-        mom = random.randint(0,self.population_size-1)
-        dad = random.randint(0,self.population_size-1)
+    def evolutionary_cycle(self, num_parents):
+        parents = []
+        for i in range(num_parents):
+            # Grab two random individuals from the population
+            indiviual_A, indiviual_B = random.sample(range(0, self.population_size), 2)
+            # Use the best one of the two as a parent
+            parents.append(max(self.population[indiviual_A].fitness, self.population[indiviual_B].fitness))
         kid = self.get_worst_fit_individual()
-        for j in range(self.chromosome_length):
-            self.population[kid].chromosome[j] = random.uniform(self.population[mom].chromosome[j],self.population[dad].chromosome[j])
-            self.population[kid].chromosome[j] += self.mutation_amt * random.gauss(0,1.0)
-            if self.population[kid].chromosome[j] > self.ub:
-                self.population[kid].chromosome[j] = self.ub
-            if self.population[kid].chromosome[j] < self.lb:
-                self.population[kid].chromosome[j] = self.lb
+        
+        chromosome_probs = []
+        for chrom_num in range(self.chromosome_length):
+            one_count = 0
+            # Sum all of the 1s of a chromosome
+            for parent in range(num_parents):
+                current_chromosome = self.population[parents[parent]].chromosome[chrom_num]
+                if current_chromosome == 1:
+                    one_count += 1
+            # Divide total 1s by total num of parents to get the probability of passing down 1 to the kid
+            chromosome_prob = one_count / num_parents
+            chromosome_probs.append(chromosome_prob)
+        
         self.population[kid].calculate_fitness()
-        self.hacker_tracker_x.append(self.population[kid].chromosome[0])
-        self.hacker_tracker_y.append(self.population[kid].chromosome[1])
-        self.hacker_tracker_z.append(self.population[kid].fitness)
        
     def print_population(self):
         for i in range(self.population_size):
@@ -106,48 +112,36 @@ class aSimpleSteadyStateGA:
                 best_fitness = self.population[i].fitness
                 best_individual = i
         print("Best Indvidual: ",str(best_individual)," ", self.population[best_individual].chromosome, " Fitness: ", str(best_fitness))
-    
-    def plot_evolved_candidate_solutions(self):
-        fig = plt.figure()
-        ax1 = fig.add_subplot(1,1,1,projection='3d')
-        ax1.scatter(self.hacker_tracker_x,self.hacker_tracker_y,self.hacker_tracker_z)
-        plt.title("Evolved Candidate Solutions")
-        ax1.set_xlim3d(-100.0,100.0)
-        ax1.set_ylim3d(-100.0,100.0)
-        ax1.set_zlim3d(0.2,1.0)
-        plt.show()
 
 
-ChromLength = 2
-ub = 100.0
-lb = -100.0
-MaxEvaluations = 4000
+ChromLength = 95
+MaxEvaluations = 15000
 
-plot = 0
+# PopSize = int(sys.argv[1])
+# mu_amt  = float(sys.argv[2])
 
-PopSize = int(sys.argv[1])
-mu_amt  = float(sys.argv[2])
+PopSize = 44
+mu_amt = 0.0001
 
-simple_steadystate_ga = aSimpleSteadyStateGA(PopSize,ChromLength,mu_amt,lb,ub)
+simple_steadystate_ga = aSimpleSteadyStateGA(PopSize,ChromLength,mu_amt)
 
 simple_steadystate_ga.generate_initial_population()
 #simple_steadystate_ga.print_population()
 
-for i in range(MaxEvaluations-PopSize+1):
-    simple_steadystate_ga.evolutionary_cycle()
-    if (i % PopSize == 0):
-        if (plot == 1):
-            simple_steadystate_ga.plot_evolved_candidate_solutions()
-        # print("At Iteration: " + str(i))
-        #simple_steadystate_ga.print_population()
-    if (simple_steadystate_ga.get_best_fitness() >= 0.99754):
-        break
+
+
+# for i in range(MaxEvaluations-PopSize+1):
+#     simple_steadystate_ga.evolutionary_cycle()
+#     if (i % PopSize == 0):
+#         print("At Iteration: " + str(i))
+#         simple_steadystate_ga.print_population()
+#     if (simple_steadystate_ga.get_best_fitness() >= 0.99754):
+#         break
 
 # print("\nFinal Population\n")
 #simple_steadystate_ga.print_population()
 simple_steadystate_ga.print_best_max_fitness()
 print("Function Evaluations: " + str(PopSize+i))
-#simple_steadystate_ga.plot_evolved_candidate_solutions()
 
 
 
