@@ -14,7 +14,14 @@ def dls(url, depth):
     if depth >= 0:
         content = ""
         print(f"current url: {url}")
-        if depth > 0:
+        if depth == 0:
+            # When depth = 0, grab content
+            # If data = None, skip to next child
+            data = webcrawl(url)
+            if data == None:
+                return
+            content = data[0]
+        else:
             # When depth > 0, grab content and links
             # If data = None, skip to next child
             data = webcrawl(url)
@@ -25,13 +32,6 @@ def dls(url, depth):
                 if not link in visited:
                     visited.append(link)
                     dls(link, depth - 1)
-        else:
-            # When depth = 0, grab content
-            # If data = None, skip to next child
-            data = webcrawl(url)
-            if data == None:
-                return
-            content = data[0]
         write_file(content, url)
 
 
@@ -150,10 +150,11 @@ def total_unigram_extractor():
         with open(os.path.join(unigram_file_directory, file), 'r') as f:
             unigram = json.loads(f.read())
             for item in unigram:
-                if not item in total_unigram:
-                    total_unigram[item] = unigram[item]
-                else:
-                    total_unigram[item] += unigram[item]
+                if item.isascii():
+                    if not item in total_unigram:
+                        total_unigram[item] = unigram[item]
+                    else:
+                        total_unigram[item] += unigram[item]
     try:
         f = open(unigram_file_directory + total_filename, "x")
         f.write(json.dumps(total_unigram))
