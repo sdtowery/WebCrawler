@@ -52,8 +52,8 @@ def run_algorithm(algorithm_obj, algorithm_type):
     algorithm_obj.generate_initial_population()
     for i in range(MaxEvaluations-PopSize+1):
         algorithm_obj.evolutionary_cycle(num_parents)
-        # if i % PopSize == 0:
-        #     print("At Iteration: " + str(i))
+        if i % PopSize == 0:
+            print("At Iteration: " + str(i))
             # algorithm_obj.print_population()
         # TODO: Replace 0.99754 with value signifying optimized feature mask has been found
         if (algorithm_obj.get_best_fitness() >= 0.99754):
@@ -85,7 +85,6 @@ def run(algorithm_type):
         row = [i]
         row.extend(feature_mask)
         write_to_csv(filename, row)
-        print(f"---------- Total Time - {algorithm_obj.total_time} ----------")
 
 
 # ----- Algorithm Config ----- #
