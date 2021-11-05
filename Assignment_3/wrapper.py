@@ -3,36 +3,26 @@ from os import write, makedirs
 from os.path import exists
 from simpleSteadyStateGA import aSimpleSteadyStateGA
 
-# Params: algorithm object, algorithm type
-# Returns: feature mask, best fitness
+# Checks if directory is created. Tf not, creates it
+# and creates csv file with set column headers and file name
+#
+# Params: directory
+def initialize_directory(directory):
+    try:
+        # Create directory for csv file if it doesn't already exist
+        if not exists(directory):
+            makedirs(directory)
+    except OSError:
+        print('Creating directory. ' + directory)
+    except Exception as err:
+        print(f"Error: {err}")
 
+    filename = directory + feature_mask_filename
+    write_to_csv(filename, column_headers)
 
-def run_algorithm(ssga, algorithm_type):
-    if algorithm_type == "SSGA":
-        num_parents = 2
-    elif algorithm_type == "SEDA":
-        num_parents = (int)(PopSize / 2)
-    else:
-        print("Invalid algorithm type...")
-        return
-
-    ssga.generate_initial_population()
-    for i in range(MaxEvaluations-PopSize+1):
-        ssga.evolutionary_cycle(num_parents)
-        print("At Iteration: " + str(i))
-        # ssga.print_population()
-
-        # Found optimized feature mask.
-        # TODO: Replace 0.99754 with value signifying optimized feature mask has been found
-        if (ssga.get_best_fitness() >= 0.99754):
-            break
-    best_fitness, best_individual = ssga.get_best_max_fitness()
-    feature_mask = ssga.population[best_individual].chromosome
-    return feature_mask, best_fitness
-
-# Params: a row to insert into the csv file
-
-
+# Writes the given row to the specified csv file
+#
+# Params: filename, row
 def write_to_csv(file_name, row):
     try:
         if exists(file_name):
@@ -46,12 +36,57 @@ def write_to_csv(file_name, row):
     except Exception as err:
         print(f"Error: {err}")
 
+# Runs the specified algorithm type with the set algorithm config
+#
+# Params: algorithm object, algorithm type
+# Returns: feature mask, best fitness
+def run_algorithm(algorithm_obj, algorithm_type):
+    if algorithm_type == "SSGA":
+        num_parents = 2
+    elif algorithm_type == "SEDA":
+        num_parents = (int)(PopSize / 2)
+    else:
+        print("Invalid algorithm type...")
+        return
 
-# ----- Wrapper Config ----- #
-ssga_directory = "ssga/"
-seda_directory = "seda/"
-feature_mask_filename = "feature_mask.csv"
-algorithm_runs = 30
+    algorithm_obj.generate_initial_population()
+    for i in range(MaxEvaluations-PopSize+1):
+        algorithm_obj.evolutionary_cycle(num_parents)
+        # if i % PopSize == 0:
+        #     print("At Iteration: " + str(i))
+            # algorithm_obj.print_population()
+        # TODO: Replace 0.99754 with value signifying optimized feature mask has been found
+        if (algorithm_obj.get_best_fitness() >= 0.99754):
+            break
+    best_fitness, best_individual = algorithm_obj.get_best_max_fitness()
+    feature_mask = algorithm_obj.population[best_individual].chromosome
+    return feature_mask, best_fitness
+
+# Runs specified algorithm X times specified by algorithm_runs and
+# saves the best fit individual of each run in a csv file
+#
+# Params: algorithm type
+def run(algorithm_type):
+    if algorithm_type == "SSGA":
+        directory = ssga_directory
+    elif algorithm_type == "SEDA":
+        directory = seda_directory
+    else:
+        print("Invalid algorithm type...")
+        return
+    filename = directory + feature_mask_filename
+
+    for i in range(algorithm_runs):
+        print(f"----- {algorithm_type} Run #{i+1} -----")
+        algorithm_obj = aSimpleSteadyStateGA(PopSize, ChromLength, mu_amt)
+        feature_mask, best_fitness = run_algorithm(algorithm_obj, algorithm_type)
+        if i == 0:
+            initialize_directory(directory)
+        row = [i]
+        row.extend(feature_mask)
+        write_to_csv(filename, row)
+        print(f"---------- Total Time - {algorithm_obj.total_time} ----------")
+
 
 # ----- Algorithm Config ----- #
 ChromLength = 95
@@ -59,37 +94,14 @@ MaxEvaluations = 15000
 PopSize = 44
 mu_amt = 0.01
 
-ssga_feature_mask_filename = ssga_directory + feature_mask_filename
-
-for i in range(algorithm_runs):
-    print(f"----- SSGA Run #{i+1} -----")
-    ssga = aSimpleSteadyStateGA(PopSize, ChromLength, mu_amt)
-    ssga_feature_mask, ssga_best_fitness = run_algorithm(ssga, "SSGA")
-
-    # TODO: Create file and write ssga_feature_mask as a new row
-    if i == 0:
-        try:
-            # Create directory for ssga csv file if it doesn't already exist
-            if not exists(ssga_directory):
-                makedirs(ssga_directory)
-        except OSError:
-            print('Error: Creating directory. ' + ssga_directory)
-        except Exception as err:
-            print(f"Error: {err}")
-
-        # column_headers = list(range(ChromLength))
-        column_headers = ["Run #"]
-        # column_headers.insert(0, "Run #")
-        for j in range(95):
-            column_headers.append(j)
-
-        write_to_csv(ssga_feature_mask_filename, column_headers)
-    row = [i]
-    row.extend(ssga_feature_mask)
-    write_to_csv(ssga_feature_mask_filename, row)
+# ----- Wrapper Config ----- #
+algorithm_runs = 30
+# - Output - #
+ssga_directory = "ssga/"
+seda_directory = "seda/"
+feature_mask_filename = "feature_mask.csv"
+column_headers = ["Run #"] + list(range(ChromLength))
 
 
-# seda = aSimpleSteadyStateGA(PopSize,ChromLength,mu_amt)
-# seda_feature_mask, seda_best_fitness = run_algorithm(seda, "SEDA")
-# print(seda_feature_mask)
-# print(seda_best_fitness)
+run("SSGA")
+# run("SEDA")

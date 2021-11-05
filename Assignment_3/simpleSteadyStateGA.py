@@ -92,6 +92,7 @@ class aSimpleSteadyStateGA:
         return best_fitness
 
     def evolutionary_cycle(self, num_parents):
+        # Sort population by ascending fitness so worst fit individuals are in the front
         self.population.sort()
 
         parents = []
@@ -118,6 +119,9 @@ class aSimpleSteadyStateGA:
             # print(f"Ones Count: {ones_count}  |  Number of Parents: {num_parents}  |  Chromosome Probability: {chromosome_prob}\n\n")
             chromosome_probs.append(chromosome_prob)
 
+        # TODO: Look into more optimized solution?
+        # This section takes a lot of time to run for SEDA.
+        # Not sure if it could be optimized better possibly?
         for kid in range(num_parents):
             for chrom_num in range(self.chromosome_length):
                 # Chromosome = 1 if a random number is less than or equal to the probability
