@@ -6,6 +6,7 @@ Created on Fri Aug  2 19:31:41 2019
 """
 
 from os.path import exists
+from os import remove
 import csv
 import random
 import sys
@@ -28,11 +29,10 @@ def write_feature_mask_dataset(feature_mask):
 
     try:
         if exists(feature_mask_dataset):
-            feature_mask_file = open(feature_mask_dataset, 'a', newline='')
-            base_dataset_file = open(base_dataset, 'r')
-        else:
-            feature_mask_file = open(feature_mask_dataset, 'x', newline='')
-            base_dataset_file = open(base_dataset, 'r')
+            remove(feature_mask_dataset)
+
+        feature_mask_file = open(feature_mask_dataset, 'x', newline='')
+        base_dataset_file = open(base_dataset, 'r')
 
         csv_reader = csv.reader(base_dataset_file)
         csv_writer = csv.writer(feature_mask_file)
@@ -73,15 +73,15 @@ def get_fitness(chromosome):
 
     html_obj = HTML_Malware("feature_mask_dataset.csv")
     # Inspect the dataset
-    html_obj.inspect_dataset()
+    # html_obj.inspect_dataset()
 
     # Preprocess the dataset
     html_obj.preprocess()
 
     chrom_fitness = html_obj.knn()
-    # html_obj.svm_linear()
-    # html_obj.svm_rbf()
-    # html_obj.mlp()
+    # chrom_fitness = html_obj.svm_linear()
+    # chrom_fitness = html_obj.svm_rbf()
+    # chrom_fitness = html_obj.mlp()
 
     # return accuracy as the chromosome fitness
     # chrom_fitness = ml_info[0]
