@@ -5,14 +5,87 @@ Created on Fri Aug  2 19:31:41 2019
 @author: Gerry Dozier
 """
 
-import os
+from os.path import exists
+import csv
 import random
 import sys
 import math
+from HTML_Malware import HTML_Malware
 
 #
 #  A Simple Steady-State, Real-Coded Genetic Algorithm
 #
+
+
+# writes the feature masked csv file
+#
+# Params: feature_mask
+
+
+def write_feature_mask_dataset(feature_mask):
+    base_dataset = "HTML_malware_dataset.csv"
+    feature_mask_dataset = "feature_mask_dataset.csv"
+
+    try:
+        if exists(feature_mask_dataset):
+            feature_mask_file = open(feature_mask_dataset, 'a', newline='')
+            base_dataset_file = open(base_dataset, 'r')
+        else:
+            feature_mask_file = open(feature_mask_dataset, 'x', newline='')
+            base_dataset_file = open(base_dataset, 'r')
+
+        csv_reader = csv.reader(base_dataset_file)
+        csv_writer = csv.writer(feature_mask_file)
+        i = 0
+        for row in csv_reader:
+            # copy the first row of the base dataset to the new dataset
+            if i == 0:
+                csv_writer.writerow(row)
+                i += 1
+                continue
+
+            # multiply the row by the feature mask and add it to new dataset
+            row_data = []
+            col_num = 0
+            for j in range(len(row)):
+                if j == 0 or j == 1:
+                    # copy the first two elements to the new row
+                    row_data.append(row[j])
+                else:
+                    # multiple the row element by the feature mask and add it to new row
+                    feature = float(row[j])
+                    feature = feature * float(feature_mask[col_num])
+                    row_data.append(feature)
+                    col_num += 1
+
+            i += 1
+            csv_writer.writerow(row_data)
+
+        feature_mask_file.close()
+        base_dataset_file.close()
+    except Exception as err:
+        print(f"Error: {err}")
+
+
+def get_fitness(chromosome):
+    # prepare the new dataset
+    write_feature_mask_dataset(chromosome)
+
+    html_obj = HTML_Malware("feature_mask_dataset.csv")
+    # Inspect the dataset
+    html_obj.inspect_dataset()
+
+    # Preprocess the dataset
+    html_obj.preprocess()
+
+    chrom_fitness = html_obj.knn()
+    # html_obj.svm_linear()
+    # html_obj.svm_rbf()
+    # html_obj.mlp()
+
+    # return accuracy as the chromosome fitness
+    # chrom_fitness = ml_info[0]
+    return chrom_fitness
 
 
 class anIndividual:
@@ -28,14 +101,7 @@ class anIndividual:
 
     # TODO: Get better fitness function
     def calculate_fitness(self):
-        # x2y2 = self.chromosome[0]**2 + self.chromosome[1]**2
-        x2y2 = 0
-        for i in range(self.chromosome_length):
-            x2y2 += self.chromosome[i]**2
-            # print(f"Chromosome value: {self.chromosome[i]}  |  x2y2: {x2y2}")
-        self.fitness = 0.5 + (math.sin(math.sqrt(x2y2)) **
-                              2 - 0.5) / (1+0.001*x2y2)**2
-        # print(f"Fitness: {self.fitness}\n")
+        self.fitness = get_fitness(self.chromosome)
 
     def print_individual(self, i):
         # print("Chromosome " +str(i) + " - Fitness: " + str(self.fitness))

@@ -1,12 +1,15 @@
 import csv
 from os import write, makedirs
 from os.path import exists
+import random
 from simpleSteadyStateGA import aSimpleSteadyStateGA
 
 # Checks if directory is created. Tf not, creates it
 # and creates csv file with set column headers and file name
 #
 # Params: directory
+
+
 def initialize_directory(directory):
     try:
         # Create directory for csv file if it doesn't already exist
@@ -23,6 +26,8 @@ def initialize_directory(directory):
 # Writes the given row to the specified csv file
 #
 # Params: filename, row
+
+
 def write_to_csv(file_name, row):
     try:
         if exists(file_name):
@@ -36,10 +41,13 @@ def write_to_csv(file_name, row):
     except Exception as err:
         print(f"Error: {err}")
 
+
 # Runs the specified algorithm type with the set algorithm config
 #
 # Params: algorithm object, algorithm type
 # Returns: feature mask, best fitness
+
+
 def run_algorithm(algorithm_obj, algorithm_type):
     if algorithm_type == "SSGA":
         num_parents = 2
@@ -66,6 +74,8 @@ def run_algorithm(algorithm_obj, algorithm_type):
 # saves the best fit individual of each run in a csv file
 #
 # Params: algorithm type
+
+
 def run(algorithm_type):
     if algorithm_type == "SSGA":
         directory = ssga_directory
@@ -79,7 +89,8 @@ def run(algorithm_type):
     for i in range(algorithm_runs):
         print(f"----- {algorithm_type} Run #{i+1} -----")
         algorithm_obj = aSimpleSteadyStateGA(PopSize, ChromLength, mu_amt)
-        feature_mask, best_fitness = run_algorithm(algorithm_obj, algorithm_type)
+        feature_mask, best_fitness = run_algorithm(
+            algorithm_obj, algorithm_type)
         if i == 0:
             initialize_directory(directory)
         row = [i]
@@ -98,6 +109,8 @@ algorithm_runs = 30
 # - Output - #
 ssga_directory = "ssga/"
 seda_directory = "seda/"
+base_dataset = "HTML_malware_dataset.csv"
+feature_mask_dataset = "feature_mask_dataset.csv"
 feature_mask_filename = "feature_mask.csv"
 column_headers = ["Run #"] + list(range(ChromLength))
 
