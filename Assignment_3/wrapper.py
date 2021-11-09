@@ -2,6 +2,7 @@ import csv
 from os import write, makedirs
 from os.path import exists
 import random
+import warnings
 from simpleSteadyStateGA import aSimpleSteadyStateGA
 
 # Checks if directory is created. Tf not, creates it
@@ -85,6 +86,7 @@ def run(algorithm_type):
         print("Invalid algorithm type...")
         return
     filename = directory + feature_mask_filename
+    global total_best_fitness
 
     for i in range(algorithm_runs):
         print(f"----- {algorithm_type} Run #{i+1} -----")
@@ -96,12 +98,13 @@ def run(algorithm_type):
         row = [i]
         row.extend(feature_mask)
         write_to_csv(filename, row)
+        total_best_fitness.append(best_fitness)
 
 
 # ----- Algorithm Config ----- #
 ChromLength = 95
-MaxEvaluations = 15000
-PopSize = 44
+MaxEvaluations = 500
+PopSize = 5
 mu_amt = 0.01
 
 # ----- Wrapper Config ----- #
@@ -113,7 +116,12 @@ base_dataset = "HTML_malware_dataset.csv"
 feature_mask_dataset = "feature_mask_dataset.csv"
 feature_mask_filename = "feature_mask.csv"
 column_headers = ["Run #"] + list(range(ChromLength))
+total_best_fitness = []
 
-
+warnings.filterwarnings("ignore")
 run("SSGA")
 # run("SEDA")
+
+
+best_fitness = max(total_best_fitness)
+print(f"Best fitness: {best_fitness}")

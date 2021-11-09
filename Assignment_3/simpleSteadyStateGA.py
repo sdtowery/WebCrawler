@@ -78,13 +78,12 @@ def get_fitness(chromosome):
     # Preprocess the dataset
     html_obj.preprocess()
 
-    chrom_fitness = html_obj.knn()
-    # chrom_fitness = html_obj.svm_linear()
+    # chrom_fitness = html_obj.knn()
+    chrom_fitness = html_obj.svm_linear()
     # chrom_fitness = html_obj.svm_rbf()
     # chrom_fitness = html_obj.mlp()
 
     # return accuracy as the chromosome fitness
-    # chrom_fitness = ml_info[0]
     return chrom_fitness
 
 
