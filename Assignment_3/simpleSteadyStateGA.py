@@ -8,6 +8,7 @@ Created on Fri Aug  2 19:31:41 2019
 from os.path import exists
 from os import remove
 import csv
+import numpy as np
 import random
 import sys
 import math
@@ -27,6 +28,9 @@ def write_feature_mask_dataset(feature_mask):
     base_dataset = "HTML_malware_dataset.csv"
     feature_mask_dataset = "feature_mask_dataset.csv"
 
+    feature_mask = [1, 1] + feature_mask
+    feature_mask = np.array(feature_mask, dtype=bool)
+
     try:
         if exists(feature_mask_dataset):
             remove(feature_mask_dataset)
@@ -44,22 +48,11 @@ def write_feature_mask_dataset(feature_mask):
                 i += 1
                 continue
 
-            # multiply the row by the feature mask and add it to new dataset
-            row_data = []
-            col_num = 0
-            for j in range(len(row)):
-                if j == 0 or j == 1:
-                    # copy the first two elements to the new row
-                    row_data.append(row[j])
-                else:
-                    # multiple the row element by the feature mask and add it to new row
-                    feature = float(row[j])
-                    feature = feature * float(feature_mask[col_num])
-                    row_data.append(feature)
-                    col_num += 1
+            repl = [0]
+            row_np = np.array(row, dtype=float)
+            row_np[~feature_mask] = repl 
 
-            i += 1
-            csv_writer.writerow(row_data)
+            csv_writer.writerow(row_np)
 
         feature_mask_file.close()
         base_dataset_file.close()
@@ -80,8 +73,8 @@ def get_fitness(chromosome):
 
     # chrom_fitness = html_obj.knn()
     # chrom_fitness = html_obj.svm_linear()
-    # chrom_fitness = html_obj.svm_rbf()
-    chrom_fitness = html_obj.mlp()
+    chrom_fitness = html_obj.svm_rbf()
+    # chrom_fitness = html_obj.mlp()
 
     # return accuracy as the chromosome fitness
     return chrom_fitness
@@ -98,7 +91,6 @@ class anIndividual:
             self.chromosome.append(random.randint(0, 1))
         self.fitness = 0
 
-    # TODO: Get better fitness function
     def calculate_fitness(self):
         self.fitness = get_fitness(self.chromosome)
 
