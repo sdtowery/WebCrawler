@@ -41,7 +41,7 @@ def run_algorithm(algorithm_obj):
         if i % PopSize == 0:
             print("At Iteration: " + str(i))
             # algorithm_obj.print_population()
-        if (algorithm_obj.get_best_fitness() == 0.0):
+        if (algorithm_obj.get_best_fitness()[0] == 0.0):
             break
     best_fitness, best_individual_index = algorithm_obj.get_best_fitness()
     best_individual = algorithm_obj.population[best_individual_index].chromosome

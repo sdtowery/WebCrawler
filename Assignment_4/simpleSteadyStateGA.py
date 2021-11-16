@@ -98,7 +98,7 @@ class aSimpleSteadyStateGA:
         return worst_individual
 
     def get_best_fitness(self):
-        best_fitness = 99999999999.0
+        best_fitness = 99999999999.0  # for minimization
         best_individual = -1
         for i in range(self.population_size):
             if self.population[i].fitness < best_fitness:
