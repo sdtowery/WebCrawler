@@ -7,6 +7,7 @@ Created on Fri Aug  2 19:31:41 2019
 
 from os.path import exists
 from os import remove
+import pandas as pd
 import csv
 import random
 import sys
@@ -19,24 +20,16 @@ from HTML_Malware import HTML_Malware
 #
 
 
-def get_fitness(chromosome):
+def get_fitness(chromosome, svm_rbf):
 
-    html_obj = HTML_Malware("feature_mask_dataset.csv")
-    # Inspect the dataset
-    # html_obj.inspect_dataset()
+    column_headers = list(range(1, len(chromosome) + 1))
+    data = dict(zip(column_headers, chromosome))
+    chromosome = pd.DataFrame(data, index=[0])
+    x, y = svm_rbf.predict_proba(chromosome)[0]
 
-    # Preprocess the dataset
-    html_obj.preprocess()
-
-    # chrom_fitness = html_obj.knn()
-    # chrom_fitness = html_obj.svm_linear()
-    # chrom_fitness = html_obj.svm_rbf()
-    chrom_fitness = html_obj.mlp()
-
-    x, y = html_obj.svm_rbf(chromosome)
-
-    # return accuracy as the chromosome fitness
-    return chrom_fitness
+    final_label = -1.0 * x + 1.0 * y
+    # returns the final_label as fitness
+    return abs(final_label)
 
 
 class anIndividual:
@@ -52,8 +45,8 @@ class anIndividual:
 
     # TODO: Get better fitness function
     # fitness will be the final_label (-1.0x + 1.0y)?
-    def calculate_fitness(self):
-        self.fitness = get_fitness(self.chromosome)
+    def calculate_fitness(self, svm_rbf):
+        self.fitness = get_fitness(self.chromosome, svm_rbf)
 
     def print_individual(self, i):
         # print("Chromosome " +str(i) + " - Fitness: " + str(self.fitness))
@@ -75,13 +68,15 @@ class anIndividual:
 
 
 class aSimpleSteadyStateGA:
-    def __init__(self, population_size, chromosome_length, mutation_rate, svm_rbf):
+    def __init__(self, population_size, chromosome_length, mutation_rate, lb, ub, svm_rbf):
         if (population_size < 2):
             print("Error: Population Size must be greater than 2")
             sys.exit()
         self.population_size = population_size
         self.chromosome_length = chromosome_length
-        self.mutation_amt = mutation_rate
+        self.mutation_amt = mutation_rate * (ub - lb)
+        self.lb = lb
+        self.ub = ub
         self.population = []
         self.svm_rbf = svm_rbf
 
@@ -89,7 +84,7 @@ class aSimpleSteadyStateGA:
         for i in range(self.population_size):
             individual = anIndividual(self.chromosome_length)
             individual.randomly_generate()
-            individual.calculate_fitness()
+            individual.calculate_fitness(self.svm_rbf)
             self.population.append(individual)
 
     def get_worst_fit_individual(self):
@@ -102,13 +97,13 @@ class aSimpleSteadyStateGA:
         return worst_individual
 
     def get_best_fitness(self):
-        best_fitness = -99999999999.0
+        best_fitness = 99999999999.0
         best_individual = -1
         for i in range(self.population_size):
-            if self.population[i].fitness > best_fitness:
+            if self.population[i].fitness < best_fitness:
                 best_fitness = self.population[i].fitness
                 best_individual = i
-        return best_fitness
+        return best_fitness, best_individual
 
     def evolutionary_cycle(self, num_parents):
         # Sort population by ascending fitness so worst fit individuals are in the front
@@ -126,17 +121,19 @@ class aSimpleSteadyStateGA:
             parent = indiviual_A if A_fitness >= B_fitness else indiviual_B
             parents.append(parent)
 
+        parent_a = self.population[parents[0]]
+        parent_b = self.population[parents[1]]
         for kid in range(num_parents):
             for chrom in range(self.chromosome_length):
                 self.population[kid].chromosome[chrom] = random.uniform(
-                    parents[0].chromosome[chrom], self.population[1].chromosome[chrom])
+                    parent_a.chromosome[chrom], parent_b.chromosome[chrom])
                 self.population[kid].chromosome[chrom] += self.mutation_amt * \
                     random.gauss(0, 1.0)
                 if self.population[kid].chromosome[chrom] > self.ub:
                     self.population[kid].chromosome[chrom] = self.ub
                 if self.population[kid].chromosome[chrom] < self.lb:
                     self.population[kid].chromosome[chrom] = self.lb
-        self.population[kid].calculate_fitness()
+        self.population[kid].calculate_fitness(self.svm_rbf)
 
     def print_population(self):
         for i in range(self.population_size):

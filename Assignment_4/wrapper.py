@@ -33,27 +33,19 @@ def initialize_directory(directory):
 # Returns: feature mask, best fitness
 
 
-def run_algorithm(algorithm_obj, algorithm_type):
-    if algorithm_type == "SSGA":
-        num_parents = 2
-    elif algorithm_type == "SEDA":
-        num_parents = (int)(PopSize / 2)
-    else:
-        print("Invalid algorithm type...")
-        return
-
+def run_algorithm(algorithm_obj):
+    num_parents = 2
     algorithm_obj.generate_initial_population()
     for i in range(MaxEvaluations-PopSize+1):
         algorithm_obj.evolutionary_cycle(num_parents)
         if i % PopSize == 0:
             print("At Iteration: " + str(i))
             # algorithm_obj.print_population()
-        # TODO: Replace 0.99754 with value signifying optimized feature mask has been found
-        if (algorithm_obj.get_best_fitness() >= 0.99754):
+        if (algorithm_obj.get_best_fitness() == 0.0):
             break
-    best_fitness, best_individual = algorithm_obj.get_best_max_fitness()
-    feature_mask = algorithm_obj.population[best_individual].chromosome
-    return feature_mask, best_fitness
+    best_fitness, best_individual_index = algorithm_obj.get_best_fitness()
+    best_individual = algorithm_obj.population[best_individual_index].chromosome
+    return best_individual, best_fitness, i
 
 # Runs specified algorithm X times specified by algorithm_runs and
 # saves the best fit individual of each run in a csv file
@@ -61,32 +53,35 @@ def run_algorithm(algorithm_obj, algorithm_type):
 # Params: algorithm type
 
 
-def run(algorithm_type):
-    html_obj = HTML_Malware("feature_mask_dataset.csv")
+def run():
+    html_obj = HTML_Malware("HTML_malware_dataset.csv")
     # Inspect the dataset
     # html_obj.inspect_dataset()
 
     # Preprocess the dataset
     html_obj.preprocess()
     rbf_svc = html_obj.svm_rbf()
-
+    function_evals_total = 0
+    best_individuals = []
     for i in range(algorithm_runs):
-        print(f"----- {algorithm_type} Run #{i+1} -----")
+        print(f"----- SSGA Run #{i+1} -----")
         algorithm_obj = aSimpleSteadyStateGA(
-            PopSize, ChromLength, mu_amt, rbf_svc)
-        feature_mask, best_fitness = run_algorithm(
-            algorithm_obj, algorithm_type)
-        if i == 0:
-            initialize_directory(directory)
-        row = [i]
-        row.extend(feature_mask)
-        write_to_csv(filename, row)
-        total_best_fitness.append(best_fitness)
+            PopSize, ChromLength, mu_amt, lb, ub, rbf_svc)
+        best_individual, best_fitness, function_evals = run_algorithm(
+            algorithm_obj)
+        function_evals_total += function_evals
+        best_individuals.append(best_individual)
+        print(f"Best individual: {best_individual}")
+        print(f"Best fitness: {best_fitness}")
+        print(f"Function evaluations: {function_evals}")
+
+    function_evals_avg = function_evals_total / 10
+    return best_individuals, function_evals_avg
 
 
 # ----- Algorithm Config ----- #
 ChromLength = 95
-MaxEvaluations = 500
+MaxEvaluations = 10000
 PopSize = 5
 mu_amt = 0.01
 ub = 1.0
@@ -94,19 +89,9 @@ lb = 0.0
 
 # ----- Wrapper Config ----- #
 algorithm_runs = 10
-# - Output - #
-ssga_directory = "ssga/"
-seda_directory = "seda/"
-base_dataset = "HTML_malware_dataset.csv"
-feature_mask_dataset = "feature_mask_dataset.csv"
-feature_mask_filename = "feature_mask.csv"
-column_headers = ["Run #"] + list(range(ChromLength))
-total_best_fitness = []
 
 warnings.filterwarnings("ignore")
-run("SSGA")
-# run("SEDA")
+best_individuals, function_evals_avg = run()
 
-
-best_fitness = max(total_best_fitness)
-print(f"Best fitness: {best_fitness}")
+print(f"10 Best Individuals: {best_individuals}")
+print(f"Average Function Evaluations: {function_evals_avg}")
