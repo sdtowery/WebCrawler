@@ -2,6 +2,7 @@ from os.path import exists
 from os import remove
 import csv
 import numpy as np
+from pandas.io import html
 
 # Helper methods for wapper.py and simpleSteadyStateGA.py
 
@@ -36,7 +37,7 @@ def write_feature_mask_dataset(feature_mask):
 
             repl = [0]
             row_np = np.array(row, dtype=float)
-            row_np[~feature_mask] = repl 
+            row_np[~feature_mask] = repl
 
             csv_writer.writerow(row_np)
 
@@ -63,3 +64,23 @@ def write_to_csv(file_name, row):
         file.close()
     except Exception as err:
         print(f"Error: {err}")
+
+
+def sum_html_malware_dataset():
+    base_dataset = "HTML_malware_dataset.csv"
+    total_sums = []
+    html_malware_dataset = open(base_dataset, 'r')
+    csv_reader = csv.reader(html_malware_dataset)
+    j = 0
+    for row in csv_reader:
+        if j == 0:
+            j += 1
+            continue
+        row_sum = 0
+        for i in range(2, len(row)):
+            row_sum += float(row[i])
+
+        total_sums.append(row_sum)
+
+    for i in range(len(total_sums)):
+        print(f"Webpage {i + 1}: {total_sums[i]}")

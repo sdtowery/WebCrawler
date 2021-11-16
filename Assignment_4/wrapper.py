@@ -1,5 +1,5 @@
 import csv
-from os import write, makedirs
+from os import sep, write, makedirs
 from os.path import exists
 import random
 import warnings
@@ -63,6 +63,7 @@ def run():
     rbf_svc = html_obj.svm_rbf()
     function_evals_total = 0
     best_individuals = []
+    best_fitnesses = []
     for i in range(algorithm_runs):
         print(f"----- SSGA Run #{i+1} -----")
         algorithm_obj = aSimpleSteadyStateGA(
@@ -71,18 +72,19 @@ def run():
             algorithm_obj)
         function_evals_total += function_evals
         best_individuals.append(best_individual)
+        best_fitnesses.append(best_fitness)
         print(f"Best individual: {best_individual}")
         print(f"Best fitness: {best_fitness}")
         print(f"Function evaluations: {function_evals}")
 
     function_evals_avg = function_evals_total / 10
-    return best_individuals, function_evals_avg
+    return best_individuals, best_fitnesses, function_evals_avg
 
 
 # ----- Algorithm Config ----- #
 ChromLength = 95
 MaxEvaluations = 10000
-PopSize = 5
+PopSize = 44
 mu_amt = 0.01
 ub = 1.0
 lb = 0.0
@@ -91,7 +93,9 @@ lb = 0.0
 algorithm_runs = 10
 
 warnings.filterwarnings("ignore")
-best_individuals, function_evals_avg = run()
+best_individuals, best_fitnesses, function_evals_avg = run()
 
-print(f"10 Best Individuals: {best_individuals}")
+# print(f"10 Best Individuals: {best_individuals}")
+print("10 Best Fitnesses:", "\n".join(
+    [str(item) for item in best_fitnesses]), sep="\n")
 print(f"Average Function Evaluations: {function_evals_avg}")

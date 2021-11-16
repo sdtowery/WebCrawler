@@ -12,7 +12,6 @@ import csv
 import random
 import sys
 import math
-from helper import write_feature_mask_dataset
 from HTML_Malware import HTML_Malware
 
 #
@@ -28,6 +27,7 @@ def get_fitness(chromosome, svm_rbf):
     x, y = svm_rbf.predict_proba(chromosome)[0]
 
     final_label = -1.0 * x + 1.0 * y
+    # print(final_label)
     # returns the final_label as fitness
     return abs(final_label)
 
@@ -40,7 +40,8 @@ class anIndividual:
 
     def randomly_generate(self):
         for i in range(self.chromosome_length):
-            self.chromosome.append(random.uniform(0, 1))
+            self.chromosome.append(random.uniform(
+                0, 1) / self.chromosome_length)
         self.fitness = 0
 
     # TODO: Get better fitness function
@@ -107,7 +108,7 @@ class aSimpleSteadyStateGA:
 
     def evolutionary_cycle(self, num_parents):
         # Sort population by ascending fitness so worst fit individuals are in the front
-        self.population.sort()
+        self.population.sort(reverse=True)
 
         # Binary Tournament Selection
         parents = []
@@ -118,7 +119,7 @@ class aSimpleSteadyStateGA:
             # Use the best one of the two as a parent
             A_fitness = self.population[indiviual_A].fitness
             B_fitness = self.population[indiviual_B].fitness
-            parent = indiviual_A if A_fitness >= B_fitness else indiviual_B
+            parent = indiviual_A if A_fitness <= B_fitness else indiviual_B
             parents.append(parent)
 
         parent_a = self.population[parents[0]]
