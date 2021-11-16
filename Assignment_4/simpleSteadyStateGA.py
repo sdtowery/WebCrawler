@@ -20,8 +20,6 @@ from HTML_Malware import HTML_Malware
 
 
 def get_fitness(chromosome):
-    # prepare the new dataset
-    write_feature_mask_dataset(chromosome)
 
     html_obj = HTML_Malware("feature_mask_dataset.csv")
     # Inspect the dataset
@@ -35,6 +33,8 @@ def get_fitness(chromosome):
     # chrom_fitness = html_obj.svm_rbf()
     chrom_fitness = html_obj.mlp()
 
+    x, y = html_obj.svm_rbf(chromosome)
+
     # return accuracy as the chromosome fitness
     return chrom_fitness
 
@@ -47,10 +47,11 @@ class anIndividual:
 
     def randomly_generate(self):
         for i in range(self.chromosome_length):
-            self.chromosome.append(random.randint(0, 1))
+            self.chromosome.append(random.uniform(0, 1))
         self.fitness = 0
 
     # TODO: Get better fitness function
+    # fitness will be the final_label (-1.0x + 1.0y)?
     def calculate_fitness(self):
         self.fitness = get_fitness(self.chromosome)
 
@@ -74,7 +75,7 @@ class anIndividual:
 
 
 class aSimpleSteadyStateGA:
-    def __init__(self, population_size, chromosome_length, mutation_rate):
+    def __init__(self, population_size, chromosome_length, mutation_rate, svm_rbf):
         if (population_size < 2):
             print("Error: Population Size must be greater than 2")
             sys.exit()
@@ -82,6 +83,7 @@ class aSimpleSteadyStateGA:
         self.chromosome_length = chromosome_length
         self.mutation_amt = mutation_rate
         self.population = []
+        self.svm_rbf = svm_rbf
 
     def generate_initial_population(self):
         for i in range(self.population_size):
@@ -112,6 +114,7 @@ class aSimpleSteadyStateGA:
         # Sort population by ascending fitness so worst fit individuals are in the front
         self.population.sort()
 
+        # Binary Tournament Selection
         parents = []
         for i in range(num_parents):
             # Grab two random individuals from the population
@@ -123,37 +126,17 @@ class aSimpleSteadyStateGA:
             parent = indiviual_A if A_fitness >= B_fitness else indiviual_B
             parents.append(parent)
 
-        chromosome_probs = []
-        for chrom_num in range(self.chromosome_length):
-            ones_count = 0
-            # Sum all of the 1s of a chromosome
-            for parent in parents:
-                current_chromosome = self.population[parent].chromosome[chrom_num]
-                if current_chromosome == 1:
-                    ones_count += 1
-            # Divide total 1s by total num of parents to get the probability of passing down 1 to the kid
-            chromosome_prob = ones_count / num_parents
-            # print(f"Ones Count: {ones_count}  |  Number of Parents: {num_parents}  |  Chromosome Probability: {chromosome_prob}\n\n")
-            chromosome_probs.append(chromosome_prob)
-
-        # TODO: Look into more optimized solution?
-        # This section takes a lot of time to run for SEDA.
-        # Not sure if it could be optimized better possibly?
         for kid in range(num_parents):
-            for chrom_num in range(self.chromosome_length):
-                # Chromosome = 1 if a random number is less than or equal to the probability
-                random_num = random.uniform(0, 1)
-                self.population[kid].chromosome[chrom_num] = \
-                    1 if random_num <= chromosome_probs[chrom_num] else 0
-                # print(f"Probability: {chromosome_probs[chrom_num]}  |  Random Number: {random_num}  |  Chromosome Value: {self.population[kid].chromosome[chrom_num]}")
-                # If random number is less than or equal to the probability then a mutation occurs
-                # Mutation flips the bit, i.e., 0 -> 1 | 1 -> 0
-                random_num = random.uniform(0, 1)
-                if random_num <= self.mutation_amt:
-                    self.population[kid].chromosome[chrom_num] = \
-                        self.population[kid].chromosome[chrom_num] ^ (1 << 0)
-                # print(f"Mutation Rate: {self.mutation_amt}  |  Random Number: {random_num}  |  Chromosome Value: {self.population[kid].chromosome[chrom_num]}\n\n")
-            self.population[kid].calculate_fitness()
+            for chrom in range(self.chromosome_length):
+                self.population[kid].chromosome[chrom] = random.uniform(
+                    parents[0].chromosome[chrom], self.population[1].chromosome[chrom])
+                self.population[kid].chromosome[chrom] += self.mutation_amt * \
+                    random.gauss(0, 1.0)
+                if self.population[kid].chromosome[chrom] > self.ub:
+                    self.population[kid].chromosome[chrom] = self.ub
+                if self.population[kid].chromosome[chrom] < self.lb:
+                    self.population[kid].chromosome[chrom] = self.lb
+        self.population[kid].calculate_fitness()
 
     def print_population(self):
         for i in range(self.population_size):
