@@ -5,6 +5,7 @@ import random
 import warnings
 from helper import write_to_csv
 from simpleSteadyStateGA import aSimpleSteadyStateGA
+from HTML_Malware import HTML_Malware
 
 # Checks if directory is created. Tf not, creates it
 # and creates csv file with set column headers and file name
@@ -61,19 +62,18 @@ def run_algorithm(algorithm_obj, algorithm_type):
 
 
 def run(algorithm_type):
-    if algorithm_type == "SSGA":
-        directory = ssga_directory
-    elif algorithm_type == "SEDA":
-        directory = seda_directory
-    else:
-        print("Invalid algorithm type...")
-        return
-    filename = directory + feature_mask_filename
-    global total_best_fitness
+    html_obj = HTML_Malware("feature_mask_dataset.csv")
+    # Inspect the dataset
+    # html_obj.inspect_dataset()
+
+    # Preprocess the dataset
+    html_obj.preprocess()
+    rbf_svc = html_obj.svm_rbf()
 
     for i in range(algorithm_runs):
         print(f"----- {algorithm_type} Run #{i+1} -----")
-        algorithm_obj = aSimpleSteadyStateGA(PopSize, ChromLength, mu_amt)
+        algorithm_obj = aSimpleSteadyStateGA(
+            PopSize, ChromLength, mu_amt, rbf_svc)
         feature_mask, best_fitness = run_algorithm(
             algorithm_obj, algorithm_type)
         if i == 0:
@@ -89,9 +89,11 @@ ChromLength = 95
 MaxEvaluations = 500
 PopSize = 5
 mu_amt = 0.01
+ub = 1.0
+lb = 0.0
 
 # ----- Wrapper Config ----- #
-algorithm_runs = 30
+algorithm_runs = 10
 # - Output - #
 ssga_directory = "ssga/"
 seda_directory = "seda/"
