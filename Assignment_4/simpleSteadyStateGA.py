@@ -12,6 +12,7 @@ import csv
 import random
 import sys
 import math
+import numpy as np
 from HTML_Malware import HTML_Malware
 
 #
@@ -39,9 +40,14 @@ class anIndividual:
         self.chromosome_length = specified_chromosome_length
 
     def randomly_generate(self):
-        for i in range(self.chromosome_length):
-            self.chromosome.append(random.uniform(
-                0, 1) / self.chromosome_length)
+        # for i in range(self.chromosome_length):
+        #     self.chromosome.append(random.uniform(
+        #         0, 1) / self.chromosome_length)
+        chromosome = np.random.dirichlet(
+            np.ones(self.chromosome_length), size=1)
+        self.chromosome = np.ndarray.tolist(chromosome)[0]
+        # print(type(self.chromosome))
+        # print(self.chromosome)
         self.fitness = 0
 
     # TODO: Get better fitness function
