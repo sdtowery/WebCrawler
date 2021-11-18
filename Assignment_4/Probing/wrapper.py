@@ -37,8 +37,8 @@ def create_random_instance(instance_length):
 
     # ci = np.array(ci)
     ci = ci.reshape(1, -1)
-    normalized_ci = normalize(ci)[0]
-    normalized_ci = np.ndarray.tolist(normalized_ci)
+    # normalized_ci = normalize(ci)[0]
+    normalized_ci = np.ndarray.tolist(ci)[0]
     sum = 0
     for i in range(len(normalized_ci)):
         sum += normalized_ci[i]
@@ -59,8 +59,7 @@ def probe():
         final_label = -1.0 * x + 1.0 * y
 
         if i % 10 == 0:
-            print("At Iteration: " + str(i) +
-                  "\n\tsum: " + str(sum))
+            print("At Iteration: " + str(i))
         if final_label == 0.0:
             continue
         if final_label > 0:
@@ -75,11 +74,10 @@ def probe():
         labels.append(final_label)
 
         csv_row = [i, final_label]
-        csv_row.extend(random_instance.values.tolist())
+        csv_row.extend(random_instance.values.tolist()[0])
         write_to_csv(second_dataset, csv_row)
 
     # print(instances)
-    print(labels)
 
 
 # ----- Wrapper Config ----- #
