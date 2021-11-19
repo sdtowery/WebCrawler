@@ -9,6 +9,7 @@ from sklearn import svm
 from HTML_Malware import HTML_Malware
 from sklearn.preprocessing import normalize, StandardScaler
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import accuracy_score
 
 # Writes the given row to the specified csv file
 #
@@ -80,12 +81,30 @@ def probe():
     # print(instances)
 
 
+def compare_svm():
+    print(f"Number of probes: {number_of_probes}")
+
+    # Compute first svm accuracy
+    pred_rbf_svc = svm_rbf.predict(html_obj.X_test)
+    svm_rbf_accuracy = accuracy_score(html_obj.y_test, pred_rbf_svc)
+    print(f"SVM_1 accuracy (baseline dataset): {svm_rbf_accuracy}")
+
+    # Compute second svm accuracy
+    pred_rbf_svc2 = svm_rbf2.predict(html_obj2.X_test)
+    svm_rbf_accuracy2 = accuracy_score(html_obj2.y_test, pred_rbf_svc2)
+    print(f"SVM_2 accuracy (second dataset): {svm_rbf_accuracy2}")
+
+    # Compute the mean squared error
+    mean_squared_error = pow(svm_rbf_accuracy - svm_rbf_accuracy2, 2)
+    print(f"Mean squared error: {mean_squared_error}")
+
+
 # ----- Wrapper Config ----- #
 base_dataset = "HTML_malware_dataset.csv"
 second_dataset = "second_dataset.csv"
 instance_length = 95
-number_of_probes = 1000
-column_headers = ["webpage_id, label"] + list(range(1, instance_length + 1))
+number_of_probes = 595
+column_headers = ["webpage_id", "label"] + list(range(1, instance_length + 1))
 
 # ----- Run ----- #
 warnings.filterwarnings("ignore")
@@ -95,4 +114,16 @@ html_obj = HTML_Malware(base_dataset)
 html_obj.preprocess()
 
 svm_rbf = html_obj.svm_rbf()
+
+# Probe machine learner
 probe()
+
+html_obj2 = HTML_Malware(second_dataset)
+
+# Preprocess the second dataset
+html_obj2.preprocess()
+
+svm_rbf2 = html_obj2.svm_rbf()
+
+# Compare the two svm's
+compare_svm()
