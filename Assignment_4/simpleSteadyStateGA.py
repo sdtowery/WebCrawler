@@ -30,7 +30,7 @@ def get_fitness(chromosome, svm_rbf):
     final_label = -1.0 * x + 1.0 * y
     # print(final_label)
     # returns the final_label as fitness
-    return abs(final_label)
+    return final_label
 
 
 class anIndividual:
@@ -104,17 +104,17 @@ class aSimpleSteadyStateGA:
         return worst_individual
 
     def get_best_fitness(self):
-        best_fitness = 99999999999.0  # for minimization
+        best_fitness = -99999999999.0  # for minimization
         best_individual = -1
         for i in range(self.population_size):
-            if self.population[i].fitness < best_fitness:
+            if self.population[i].fitness > best_fitness:
                 best_fitness = self.population[i].fitness
                 best_individual = i
         return best_fitness, best_individual
 
     def evolutionary_cycle(self, num_parents):
         # Sort population by ascending fitness so worst fit individuals are in the front
-        self.population.sort(reverse=True)
+        self.population.sort()
 
         # Binary Tournament Selection
         parents = []

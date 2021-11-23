@@ -39,9 +39,9 @@ def run_algorithm(algorithm_obj):
     for i in range(MaxEvaluations-PopSize+1):
         algorithm_obj.evolutionary_cycle(num_parents)
         if i % PopSize == 0:
-            print("At Iteration: " + str(i))
+            print(f"At Iteration: {i}  |  Best Fitness: {algorithm_obj.get_best_fitness()[0]}")
             # algorithm_obj.print_population()
-        if (algorithm_obj.get_best_fitness()[0] == 0.0):
+        if (algorithm_obj.get_best_fitness()[0] == 1.0):
             break
     best_fitness, best_individual_index = algorithm_obj.get_best_fitness()
     best_individual = algorithm_obj.population[best_individual_index].chromosome
@@ -95,7 +95,7 @@ algorithm_runs = 10
 warnings.filterwarnings("ignore")
 best_individuals, best_fitnesses, function_evals_avg = run()
 
-# print(f"10 Best Individuals: {best_individuals}")
+print(f"10 Best Individuals: {best_individuals}")
 print("10 Best Fitnesses:", "\n".join(
     [str(item) for item in best_fitnesses]), sep="\n")
 print(f"Average Function Evaluations: {function_evals_avg}")
