@@ -18,16 +18,31 @@ def get_confusion_matrix(classifier):
     html_obj.preprocess()
 
     if (classifier == KNN):
-        tn, fp, fn, tp = html_obj.knn()
+        tn, fp, fn, tp, actual, prediction = html_obj.knn()
     elif (classifier == SVM_RBF):
-        tn, fp, fn, tp = html_obj.svm_rbf()
+        tn, fp, fn, tp, actual, prediction = html_obj.svm_rbf()
     elif (classifier == SVM_LINEAR):
-        tn, fp, fn, tp = html_obj.svm_linear()
+        tn, fp, fn, tp, actual, prediction = html_obj.svm_linear()
     else:
-        tn, fp, fn, tp = html_obj.mlp()
+        tn, fp, fn, tp, actual, prediction = html_obj.mlp()
 
+    false_positives, false_negatives = get_false_results(actual, prediction)
+    print(f"{len(false_positives)} false positives: {false_positives}")
+    print(f"{len(false_negatives)} false negatives: {false_negatives}")
     return tn, fp, fn, tp
 
+def get_false_results(actual, prediction):
+    actual_values, actual_indices = actual
+    false_positives = []
+    false_negatives = []
+    for i in range(len(actual_values)):
+        if prediction[i] != actual_values[i]:
+            if prediction[i] == 1:
+                false_positives.append(actual_indices[i])
+            else:
+                false_negatives.append(actual_indices[i])
+    return false_positives, false_negatives
+            
 
 def run(classifier):
     total_runs = 10
@@ -36,7 +51,9 @@ def run(classifier):
     avg_fn = 0
     avg_tp = 0
 
+    print(f"=-=-=-=-=- {classifier} -=-=-=-=-=")
     for i in range(total_runs):
+        print(f"--- Run #{i+1} ---")
         tn, fp, fn, tp = get_confusion_matrix(classifier)
         avg_tn += tn
         avg_fp += fp
