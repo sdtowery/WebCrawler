@@ -9,6 +9,7 @@ MLP = "mlp"
 
 
 def get_confusion_matrix(classifier):
+
     if (classifier == KNN):
         tn, fp, fn, tp, actual, prediction = html_obj.knn()
     elif (classifier == SVM_RBF):
@@ -67,6 +68,9 @@ def run(classifier):
         set.intersection(*map(set, total_false_positives)))
     total_false_negatives = list(
         set.intersection(*map(set, total_false_negatives)))
+
+    total_false_positives.sort()
+    total_false_negatives.sort()
 
     return avg_tn, avg_fp, avg_fn, avg_tp, total_false_positives, total_false_negatives
 
